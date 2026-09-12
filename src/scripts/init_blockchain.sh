@@ -30,7 +30,9 @@ done
 
 syskey_pub=EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
 syskey_priv=5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
-contracts_dir=/usr/opt/eosio.contracts/build/contracts
+#contracts_dir=/usr/opt/eosio.contracts/build/contracts
+contracts_dir=/usr/opt/eosio.contracts/build/contracts/eosio-contracts
+
 boot_contract_dir=$contracts_dir
 
 echo "=== lamington: setup wallet: lamington ==="
@@ -131,34 +133,15 @@ do
   sleep 0.5s
 done
 
-echo "=== lamington: system contract successfully installed ==="
 
+echo "=== lamington: Set eosio.msig to be privileged ==="
+cleos push action eosio setpriv '["eosio.msig",1]' -p eosio
 sleep 5s
 
+echo "=== lamington: system contract successfully installed ==="
+
 echo "=== lamington: init system contract ==="
-max_attempts=3
-attempt=1
-success=false
-
-while [ $attempt -le $max_attempts ] && [ "$success" = false ]; do
-  echo "Attempt $attempt of $max_attempts to initialize system contract..."
-  if cleos push action eosio init '[0, "4,EOS"]' -p eosio@active; then
-    echo "System contract initialized successfully."
-    success=true
-  else
-    echo "Failed to initialize system contract (attempt $attempt of $max_attempts)."
-    if [ $attempt -lt $max_attempts ]; then
-      echo "Retrying in 2 seconds..."
-      sleep 2
-    fi
-    attempt=$((attempt+1))
-  fi
-done
-
-if [ "$success" = false ]; then
-  echo "Failed to initialize system contract after $max_attempts attempts. Exiting with error."
-  exit 1
-fi
+cleos push action eosio init '[0, "4,EOS"]' -p eosio@active;
 
 echo "=== lamington: Verifying rammarket table ==="
 echo "Checking if the rammarket table has been properly initialized..."
@@ -175,9 +158,7 @@ else
   exit 1
 fi
 
-echo "=== lamington: Set eosio.msig to be privileged ==="
-cleos push action eosio setpriv '["eosio.msig",1]' -p eosio
-
+sleep 5s
 
 
 # Keep the container alive for as long as nodeos lives.
